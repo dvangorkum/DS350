@@ -1,6 +1,6 @@
 ---
 title: "Computations"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+date: "September 18, 2025"
 execute:
   keep-md: true
   warning: false
@@ -10,12 +10,11 @@ format:
     code-line-numbers: true
 ---
 
-```{r}
-#| label: load-packages
-#| echo: false
 
-library(ggplot2)
-```
+::: {.cell}
+
+:::
+
 
 ## Three articles with data & visualizations
 
@@ -40,17 +39,33 @@ I love how in the beginning of the article there is a visual that explains the a
 The visualization below shows a positive, strong, and linear relationship between the city and highway mileage of these cars.
 Additionally, mileage is higher for cars with fewer cylinders.
 
-```{r}
+
+::: {.cell}
+
+```{.r .cell-code}
 plot(1:20)
 ```
 
+::: {.cell-output-display}
+![](First_Quarto_File_files/figure-html/unnamed-chunk-1-1.png){width=672}
+:::
+:::
 
-```{r}
-#| label: scatterplot
 
+
+
+::: {.cell}
+
+```{.r .cell-code}
 ggplot(mpg, aes(x = hwy, y = cty, color = cyl)) +
   geom_point(alpha = 0.5, size = 2) +
   scale_color_viridis_c() +
   theme_minimal()
 ```
+
+::: {.cell-output-display}
+![](First_Quarto_File_files/figure-html/scatterplot-1.png){width=672}
+:::
+:::
+
 

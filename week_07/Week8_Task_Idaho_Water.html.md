@@ -15,12 +15,12 @@ execute:
 ::: {.cell}
 
 ```{.r .cell-code}
-library(sf)
 library(tidyverse)
 library(ggrepel)
+library(sf)
 
-# Idaho state shape
-idaho <- st_read("Downloads/shp/County-AK-HI-Moved-USA-Map.shp")
+# Shapefiles: use absolute paths
+counties <- st_read("~/Downloads/shp/County-AK-HI-Moved-USA-Map.shp")
 ```
 
 ::: {.cell-output .cell-output-stdout}
@@ -40,8 +40,7 @@ Projected CRS: Albers
 :::
 
 ```{.r .cell-code}
-# Water bodies
-water <- st_read("Downloads/water/hyd250.shp")
+water <- st_read("~/Downloads/water/hyd250.shp")
 ```
 
 ::: {.cell-output .cell-output-stdout}
@@ -59,8 +58,7 @@ Projected CRS: NAD83 / Idaho Transverse Mercator
 :::
 
 ```{.r .cell-code}
-# Wells
-wells <- st_read("Downloads/Wells/Wells.shp")
+wells <- st_read("~/Downloads/Wells/Wells.shp")
 ```
 
 ::: {.cell-output .cell-output-stdout}
@@ -78,8 +76,7 @@ Geodetic CRS:  WGS 84
 :::
 
 ```{.r .cell-code}
-# Dams
-dams <- st_read("Downloads/Idaho_Dams/Dam_Safety.shp")
+dams <- st_read("~/Downloads/Idaho_Dams/Dam_Safety.shp")
 ```
 
 ::: {.cell-output .cell-output-stdout}
@@ -96,6 +93,10 @@ Geodetic CRS:  WGS 84
 
 
 :::
+
+```{.r .cell-code}
+idaho <- counties %>% filter(StateName == "Idaho")
+```
 :::
 
 

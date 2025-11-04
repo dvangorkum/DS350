@@ -12,17 +12,21 @@ execute:
 ---
 
 ```{r}
+library(sf)
 library(tidyverse)
 library(ggrepel)
-library(sf)
 
-# Shapefiles: use absolute paths
-counties <- st_read("~/Downloads/shp/County-AK-HI-Moved-USA-Map.shp")
-water <- st_read("~/Downloads/water/hyd250.shp")
-wells <- st_read("~/Downloads/Wells/Wells.shp")
-dams <- st_read("~/Downloads/Idaho_Dams/Dam_Safety.shp")
+# Idaho state shape
+idaho <- st_read("Downloads/shp/County-AK-HI-Moved-USA-Map.shp")
 
-idaho <- counties %>% filter(StateName == "Idaho")
+# Water bodies
+water <- st_read("Downloads/water/hyd250.shp")
+
+# Wells
+wells <- st_read("Downloads/Wells/Wells.shp")
+
+# Dams
+dams <- st_read("Downloads/Idaho_Dams/Dam_Safety.shp")
 
 ```
 

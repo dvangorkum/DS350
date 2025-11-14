@@ -1,0 +1,131 @@
+## 
+
+---
+title: "W8_Task_US_Cities"
+author: "Daniel Van Gorkum"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(USAboundaries)
+library(ggrepel)
+
+
+```
+
+```{r}
+states <- us_states() %>%
+  filter(!name %in% c("Alaska", "Hawaii"))
+
+# Extract Idaho
+idaho_state <- states %>% filter(name == "Idaho")
+idaho_counties <- us_counties(states = "Idaho")
+
+# 2. Get US cities
+cities_all <- us_cities()
+
+# Keep only contiguous states and get top 3 by population per state
+contig_states <- states$name
+cities <- cities_all %>%
+  filter(state_name %in% contig_states) %>%
+  group_by(state_name) %>%
+  arrange(desc(population)) %>%
+  slice_head(n = 3) %>%
+  mutate(rank = row_number()) %>%
+  ungroup()
+
+# Ensure cities are sf with correct CRS
+cities <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326, remove = FALSE)
+```
+
+```{r}
+rank_colors <- c("1" = "darkred", "2" = "orange", "3" = "gold")
+
+leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = states,
+              color = "black",
+              weight = 0.5,
+              fillOpacity = 0,
+              group = "States") %>%
+  addPolygons(data = idaho_counties,
+              color = "blue",
+              weight = 1,
+              fillOpacity = 0,
+              group = "Idaho Counties") %>%
+  addCircleMarkers(data = cities,
+                   radius = 5,
+                   color = ~rank_colors[as.character(rank)],
+                   stroke = FALSE,
+                   fillOpacity = 0.8,
+                   label = ~paste0(city, ", ", state_name, 
+                                   "<br>Population: ", scales::comma(population)),
+                   group = "Cities") %>%
+  addLegend("bottomright",
+            colors = rank_colors,
+            labels = c("1st Largest", "2nd Largest", "3rd Largest"),
+            title = "City Rank") %>%
+  addLayersControl(
+    overlayGroups = c("States", "Idaho Counties", "Cities"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+```
+
+```{r}
+
+# Extract coordinates for labeling
+
+cities_coords <- cities %>%
+st_coordinates() %>%
+as.data.frame() %>%
+bind_cols(cities %>% st_set_geometry(NULL)) %>%
+rename(lon = X, lat = Y)
+
+rank_colors <- c("1" = "darkred", "2" = "orange", "3" = "gold")
+
+map_plot <- ggplot() +
+geom_sf(data = states, fill = NA, color = "black", linewidth = 0.3) +
+geom_sf(data = idaho_counties, fill = NA, color = "blue", linewidth = 0.5) +
+geom_sf(data = cities, aes(color = factor(rank)), size = 2) +
+scale_color_manual(values = rank_colors, name = "City Rank") +
+geom_text_repel(
+data = cities_coords,
+aes(x = lon, y = lat, label = city, color = factor(rank)),
+size = 3,
+box.padding = 0.3
+) +
+coord_sf() +
+theme_minimal() +
+labs(
+title = "Top 3 Cities in Each Contiguous U.S. State",
+subtitle = "Idaho counties outlined in blue",
+caption = "Data: USAboundaries"
+) +
+theme(
+legend.position = "bottom",
+plot.title = element_text(size = 18, face = "bold"),
+plot.subtitle = element_text(size = 12)
+)
+
+map_plot
+
+
+
+```
+
+```{r}
+# 5. Save map as PNG
+ggsave("citymap.png", map_plot, width = 15, height = 10, dpi = 300)
+
+```

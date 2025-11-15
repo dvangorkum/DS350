@@ -1,0 +1,83 @@
+---
+title: "W9_Stock_Analysis"
+author: "Daniel Van Gorkum"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+## 
+
+```{r}
+# Ensure required packages are installed
+packages <- c("tidyverse", "tidyquant", "dygraphs", "timetk", "quantmod")
+installed <- packages %in% rownames(installed.packages())
+if(any(!installed)) install.packages(packages[!installed], dependencies = TRUE)
+
+# Load libraries
+library(tidyverse)
+library(tidyquant)
+library(dygraphs)
+library(timetk)
+library(quantmod)
+```
+
+```{r}
+# Replace this vector with whatever tickers your friend gives you at meeting time
+
+my_stocks <- c("AAPL", "GOOG", "NVDA", "TSLA", "KO")
+
+stock_data <- tq_get(my_stocks, from = Sys.Date() - years(5))
+glimpse(stock_data)
+
+```
+
+```{r}
+stock_returns <- stock_data %>%
+group_by(symbol) %>%
+tq_transmute(select = adjusted,
+mutate_fun = periodReturn,
+period = "daily",
+col_rename = "daily_return")
+# Convert to wide format
+
+returns_wide <- stock_returns %>%
+pivot_wider(names_from = symbol, values_from = daily_return)
+
+# Use timetk to convert tidy data → xts
+
+returns_xts <- tk_xts(returns_wide, date_var = date)
+
+```
+
+```{r}
+dygraph(returns_xts, main = "Daily Stock Returns (Last 5 Years)") %>%
+dyRangeSelector() %>%
+dyLegend(show = "always", hideOnMouseOut = FALSE) %>%
+dyOptions(colors = RColorBrewer::brewer.pal(n = length(my_stocks), name = "Set1"))
+
+```
+
+```{r}
+portfolio_returns <- stock_returns %>%
+tq_portfolio(assets_col = symbol,
+returns_col = daily_return,
+weights = NULL, # equally weighted
+col_rename = "portfolio_return")
+
+portfolio_xts <- tk_xts(portfolio_returns, date_var = date)
+
+dygraph(cumprod(1 + portfolio_xts),
+main = "Equally Weighted Portfolio Growth") %>%
+dyRangeSelector()
+
+```
+
+# Summary
+
+What I have seen through the data and the visuals is that an individual stock by themselves is very volatile as can impose a lot of risk for an individual who puts all their eggs in one basket. However if we equally disburse to all the 5 different equities and make one portfolio, you get a relatively safe return with less volatility (lower standard deviation), especially if you are looking for holding in the long-term at a bullish projection.

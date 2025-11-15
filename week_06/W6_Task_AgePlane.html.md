@@ -1,0 +1,94 @@
+---
+title: "W6_Task_AgePlanes"
+author: "Daniel Van Gorkum"
+date: "November 15, 2025"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(tidyverse)
+library(nycflights13)
+library(lubridate)
+
+flights_planes <- flights %>%
+left_join(planes, by = "tailnum")
+
+flights_planes <- flights_planes %>%
+mutate(plane_age = 2013 - year.y)
+
+flights_planes_clean <- flights_planes %>%
+filter(!is.na(plane_age), !is.na(dep_delay), plane_age > 0)
+
+ggplot(flights_planes_clean, aes(x = plane_age, y = dep_delay)) +
+geom_jitter(alpha = 0.1) +
+geom_smooth(method = "lm", se = FALSE, color = "red") +
+labs(title = "Departure Delay by Plane Age", x = "Plane Age", y = "Departure Delay (minutes)")
+```
+
+::: {.cell-output-display}
+![](W6_Task_AgePlane_files/figure-html/unnamed-chunk-1-1.png){width=672}
+:::
+:::
+
+
+Some patterns I see is that for younger planes that there are usually more flights delays, however this could be due to the large amount of flights being done by planes between the ages of 0-30. We do see some outliers for older planes but none of them seem to have very long delays. The line best fit isn't much help and just shows that there isn't much significance.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+flights_planes_clean <- flights_planes_clean %>%
+mutate(age_group = case_when(
+plane_age <= 10 ~ "0-10",
+plane_age <= 20 ~ "11-20",
+plane_age <= 30 ~ "21-30",
+TRUE ~ ">30"
+))
+
+flights_planes_airlines <- flights_planes_clean %>%
+left_join(airlines, by = "carrier")
+
+ggplot(flights_planes_airlines, aes(x = name, y = plane_age)) +
+geom_boxplot() +
+coord_flip() +
+labs(title = "Plane Age by Airline", x = "Airline", y = "Plane Age")
+```
+
+::: {.cell-output-display}
+![](W6_Task_AgePlane_files/figure-html/unnamed-chunk-2-1.png){width=672}
+:::
+:::
+
+
+Drilling by Airline gives some insights that some Airlines have a higher/lower standard deviation of plane age. We see that Airlines like SkyWest, Mesa, Frontier, Virgin, etc... have a very low deviation of plane age which can indicate less risk, where American airlines, Delta, Us Airways vary greatly from first to third quartile and max and min. This shows that there are a select few Airlines that are still operating with older planes.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+set.seed(123)  # for reproducibility
+sampled_data <- flights_planes_airlines %>% 
+  sample_n(10000)
+
+ggplot(sampled_data, aes(x = plane_age, y = distance)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "loess") +
+  labs(title = "Distance vs Plane Age", x = "Plane Age", y = "Flight Distance")
+```
+
+::: {.cell-output-display}
+![](W6_Task_AgePlane_files/figure-html/unnamed-chunk-3-1.png){width=672}
+:::
+:::
+
+
+Using this visual is similar to the first however our y-value is flight distance. We see that the older planes aren't operating on very long flights, especially those over 2,000. We do see that there is a clear boundary for almost all flights of just under 3,000 miles and a couple flights around 5,000 miles which are all planes under 20 years old.

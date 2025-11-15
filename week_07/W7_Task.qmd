@@ -1,0 +1,90 @@
+---
+title: "W7_Task"
+author: "Daniel Van Gorkum"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+## Set Up
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(lubridate)
+library(riem)
+
+
+carwash <- read_csv("https://byuistats.github.io/M335/data/carwash.csv")
+glimpse(carwash)
+
+```
+
+```{r}
+carwash <- carwash %>%
+  mutate(local_time = with_tz(time, tzone = "America/Boise"))
+
+
+summary(carwash)
+carwash %>%
+ggplot(aes(x = amount)) +
+geom_histogram(bins = 30, fill = "steelblue", color = "white")
+
+```
+
+```{r}
+carwash <- carwash %>%
+filter(amount > 0) %>%
+mutate(hour = ceiling_date(local_time, unit = "hour"))
+
+hourly_sales <- carwash %>%
+group_by(hour) %>%
+summarise(total_sales = sum(amount, na.rm = TRUE))
+
+range(hourly_sales$hour)
+
+weather <- riem_measures(
+station = "RXE",
+date_start = as_date(min(hourly_sales$hour)),
+date_end = as_date(max(hourly_sales$hour))
+)
+
+weather <- weather %>%
+mutate(hour = ceiling_date(valid, unit = "hour")) %>%
+group_by(hour) %>%
+summarise(temp_f = mean(tmpf, na.rm = TRUE)) %>%
+mutate(temp_c = (temp_f - 32) * 5/9)
+
+combined <- left_join(hourly_sales, weather, by = "hour")
+
+```
+
+```{r}
+ggplot(combined, aes(x = temp_c, y = total_sales)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Hourly Sales vs. Temperature",
+       x = "Temperature (°C)",
+       y = "Total Sales")
+
+combined %>%
+  mutate(hour_of_day = hour(hour)) %>%
+  group_by(hour_of_day) %>%
+  summarise(avg_sales = mean(total_sales, na.rm = TRUE),
+            avg_temp = mean(temp_c, na.rm = TRUE)) %>%
+  ggplot(aes(x = hour_of_day, y = avg_sales, color = avg_temp)) +
+  geom_line(size = 1.2) +
+  scale_color_viridis_c() +
+  labs(title = "Average Hourly Sales by Time of Day and Temperature",
+       x = "Hour of Day", y = "Average Sales", color = "Temperature (°C)")
+
+```
+
+# Key Takeaways
+
+We see using the plot for total sales and temperature that there is almost no correlation between temp and total sales with the line best fit being mostly flat and most of the sales being on the bottom right (higher temp and less sales), which indicates that these are most days that are open/operating for the cart wash. We also see that the hour of the day is most important, where there are two peaks, one at the open (around 9am) and then noon (people's lunch break). Then later on in the day we have temperature increasing but less people able to make it to the car wash.

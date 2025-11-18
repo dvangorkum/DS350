@@ -1,0 +1,82 @@
+---
+title: "W10_Task_Count_Words"
+author: "Daniel Van Gorkum"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+## 
+
+```{r}
+library(tidyverse)
+library(stringr)
+
+scriptures <- read_csv("~/Downloads/lds-scriptures.csv")
+
+glimpse(scriptures)
+```
+
+```{r}
+df <- scriptures %>%
+  mutate(
+    word_count = str_count(scripture_text, boundary("word")),
+    contains_jesus = str_detect(tolower(scripture_text), "\\bjesus\\b")
+  )
+
+
+```
+
+```{r}
+avg_lengths <- df %>%
+filter(volume_title %in% c("New Testament", "Book of Mormon")) %>%
+group_by(volume_title) %>%
+summarise(
+avg_words = mean(word_count, na.rm = TRUE),
+verse_count = n()
+)
+
+avg_lengths
+
+```
+
+The average words in the Book of Mormon is more than the New Testament by almost double, and the New Testament has longer verses.
+
+# Counting times "Jesus" is mentioned
+
+```{r}
+jesus_counts <- df %>%
+filter(volume_title %in% c("New Testament", "Book of Mormon")) %>%
+group_by(volume_title) %>%
+summarise(
+jesus_mentions = sum(contains_jesus)
+)
+
+jesus_counts
+
+```
+
+When strictly finding the word "Jesus" we see that it appears much more in the New Testament than in the Book of Mormon, however this is not accounting for other names/nicknames that Jesus has like Savior, Lord, Christ, etc...
+
+# Drilling only into the Book of Mormon
+
+```{r}
+bom_df <- df %>%
+filter(volume_title == "Book of Mormon")
+
+ggplot(bom_df, aes(x = word_count)) +
+geom_histogram(binwidth = 2, fill="steelblue", color="white") +
+facet_wrap(~ book_title, scales="free_y", ncol=3) +
+labs(
+title = "Word Count Distribution per Verse in the Book of Mormon",
+x = "Words per Verse",
+y = "Number of Verses"
+) +
+theme_minimal()
+
+```

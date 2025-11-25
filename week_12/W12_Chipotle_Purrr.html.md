@@ -1,7 +1,7 @@
 ---
-title: "W12_Task_Chipotle"
+title: "W12_Task_Chipotle_Purrr"
 author: "Daniel Van Gorkum"
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+date: "November 25, 2025"
 format: html
 editor: visual
 execute:
@@ -11,7 +11,10 @@ execute:
   keep-md: true
 ---
 
-```{r}
+
+::: {.cell}
+
+```{.r .cell-code}
 # Load libraries
 
 library(tidyverse)
@@ -31,10 +34,14 @@ pop_string_to_tibble <- function(pop_string) {
   
   return(df)
 }
-
 ```
+:::
 
-```{r}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 pop_string_to_tibble <- function(pop_string) {
 
   # Handle missing strings
@@ -54,47 +61,184 @@ pop_string_to_tibble <- function(pop_string) {
 
   return(df)
 }
-
 ```
+:::
 
-```{r}
+
+
+::: {.cell}
+
+```{.r .cell-code}
+most_popular_day <- function(pop_string) {
+
+  df <- pop_string_to_tibble(pop_string)
+
+  # If all NA, return NA
+  if (all(is.na(df$visits))) {
+    return(NA_character_)
+  }
+
+  max_visits <- max(df$visits)
+
+  top_days <- df |>
+    filter(visits == max_visits) |>
+    pull(day)
+
+  paste(top_days, collapse = ", ")
+}
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
 chipotle <- read_csv(
   "https://byuistats.github.io/M335/data/chipotle_reduced.csv"
 )
-
-
 ```
+:::
 
-```{r}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 test2 <- "{“Monday”:18,“Tuesday”:16,“Wednesday”:14,“Thursday”:27,“Friday”:26,“Saturday”:36,“Sunday”:20}"
 
 pop_string_to_tibble(test2)
-most_popular_day(test2)
-
 ```
 
-```{r}
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 7 × 2
+  day       visits
+  <chr>      <dbl>
+1 Monday        18
+2 Tuesday       16
+3 Wednesday     14
+4 Thursday      27
+5 Friday        26
+6 Saturday      36
+7 Sunday        20
+```
+
+
+:::
+
+```{.r .cell-code}
+most_popular_day(test2)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+[1] "Saturday"
+```
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
 test2 <- '{"Monday":18,"Tuesday":16,"Wednesday":14,"Thursday":27,"Friday":26,"Saturday":36,"Sunday":20}'
 pop_string_to_tibble(test2)
-most_popular_day(test2)
-
-
 ```
 
-```{r}
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 7 × 2
+  day       visits
+  <chr>      <dbl>
+1 Monday        18
+2 Tuesday       16
+3 Wednesday     14
+4 Thursday      27
+5 Friday        26
+6 Saturday      36
+7 Sunday        20
+```
+
+
+:::
+
+```{.r .cell-code}
+most_popular_day(test2)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+[1] "Saturday"
+```
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
 test3 <- '{"Monday":0,"Tuesday":0,"Wednesday":1,"Thursday":0,"Friday":0,"Saturday":1,"Sunday":0}'
 pop_string_to_tibble(test3)
-most_popular_day(test3)
-
 ```
 
-```{r}
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 7 × 2
+  day       visits
+  <chr>      <dbl>
+1 Monday         0
+2 Tuesday        0
+3 Wednesday      1
+4 Thursday       0
+5 Friday         0
+6 Saturday       1
+7 Sunday         0
+```
+
+
+:::
+
+```{.r .cell-code}
+most_popular_day(test3)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+[1] "Wednesday, Saturday"
+```
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
 chipotle_nested <- chipotle %>%
 mutate(weekly_visits = map(popularity_by_day, pop_string_to_tibble))
-
 ```
+:::
 
-```{r}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 # Unnest and summarize visits
 
 visits_long <- chipotle_nested %>%
@@ -116,18 +260,30 @@ x = "Day",
 y = "Total Visits"
 ) +
 theme(legend.position = "none")
-
 ```
+
+::: {.cell-output-display}
+![](W12_Chipotle_Purrr_files/figure-html/unnamed-chunk-9-1.png){width=672}
+:::
+:::
+
 
 # Explanation
 
-```{r}
+
+::: {.cell}
+
+```{.r .cell-code}
 chipotle_nested <- chipotle_nested %>%
 mutate(busiest_day = map_chr(popularity_by_day, most_popular_day))
-
 ```
+:::
 
-```{r}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 busiest_summary <- chipotle_nested %>%
 filter(!is.na(busiest_day)) %>%
 count(busiest_day)
@@ -141,8 +297,13 @@ x = "Day",
 y = "Number of Restaurants"
 ) +
 theme(legend.position = "none")
-
 ```
+
+::: {.cell-output-display}
+![](W12_Chipotle_Purrr_files/figure-html/unnamed-chunk-11-1.png){width=672}
+:::
+:::
+
 
 # Summary
 
@@ -152,7 +313,11 @@ Due to those two days the goal of the promotion would be to reach the highest nu
 
 Between the two the visual total visits chart was the most helpful to measure actual customer volume.
 
-```{r}
-saveRDS(chipotle_nested, "chipotle_nested.rds")
 
+::: {.cell}
+
+```{.r .cell-code}
+saveRDS(chipotle_nested, "chipotle_nested.rds")
 ```
+:::
+

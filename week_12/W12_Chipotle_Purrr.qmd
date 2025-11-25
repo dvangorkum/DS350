@@ -1,5 +1,5 @@
 ---
-title: "W12_Task_Chipotle"
+title: "W12_Task_Chipotle_Purrr"
 author: "Daniel Van Gorkum"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 format: html
@@ -53,6 +53,27 @@ pop_string_to_tibble <- function(pop_string) {
     mutate(visits = as.numeric(visits))
 
   return(df)
+}
+
+```
+
+```{r}
+most_popular_day <- function(pop_string) {
+
+  df <- pop_string_to_tibble(pop_string)
+
+  # If all NA, return NA
+  if (all(is.na(df$visits))) {
+    return(NA_character_)
+  }
+
+  max_visits <- max(df$visits)
+
+  top_days <- df |>
+    filter(visits == max_visits) |>
+    pull(day)
+
+  paste(top_days, collapse = ", ")
 }
 
 ```

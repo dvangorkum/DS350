@@ -1,0 +1,312 @@
+---
+title: "exam_practice"
+author: "Daniel Van Gorkum"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+format: html
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+  keep-md: true
+---
+
+## Tool Box
+
+```{r}
+# ==============================
+# DATA IMPORT
+# ==============================
+
+# Read CSV files
+library(readr)
+my_data <- read_csv("path/to/data.csv")  
+# Use when you have CSV datasets to load
+
+# Read Excel files (if allowed)
+# library(readxl)
+# my_data <- read_excel("path/to/data.xlsx")  
+# Use when dataset is in Excel format
+
+# Quick data inspection
+glimpse(my_data)  # Shows structure of data
+summary(my_data)  # Summary statistics of all columns
+head(my_data)     # First 6 rows
+tail(my_data)     # Last 6 rows
+
+
+# ==============================
+# STRING MANIPULATION
+# ==============================
+library(stringr)
+
+# Extract numbers from text
+my_data <- my_data %>%
+  mutate(num_col = str_extract(text_col, "\\d+"), 
+         num_col = as.numeric(num_col))  
+# Use when numeric values are embedded in strings
+
+# Detect pattern / create flags
+my_data <- my_data %>%
+  mutate(success_flag = if_else(str_detect(status_col, "success"), 1, 0))  
+# Use when you want to flag rows based on a keyword or pattern
+
+
+# ==============================
+# DATE HANDLING
+# ==============================
+library(lubridate)
+
+# Convert text to Date
+my_data <- my_data %>%
+  mutate(Date = as.Date(Date, format = "%Y-%m-%d"),
+         Year = year(Date),
+         Month = month(Date, label = TRUE))  
+# Use when dataset has dates and you want to extract year/month
+
+
+# ==============================
+# DATA WRANGLING
+# ==============================
+library(dplyr)
+
+# Filter rows
+my_data <- my_data %>%
+  filter(NumericCol > 0, CategoryCol == "A")  
+# Use to select only certain rows
+
+# Create new columns / mutate
+my_data <- my_data %>%
+  mutate(new_col = NumericCol + 10)  
+# Use to calculate new metrics
+
+# Group by and summarize
+summary_by_group <- my_data %>%
+  group_by(CategoryCol) %>%
+  summarize(
+    count = n(),                      # number of rows
+    mean_value = mean(NumericCol, na.rm = TRUE),
+    sum_value = sum(NumericCol, na.rm = TRUE),
+    .groups = "drop"
+  )  
+# Use to get aggregate statistics per group
+
+# Arrange rows
+my_data <- my_data %>%
+  arrange(desc(NumericCol))  
+# Use to sort dataset
+
+
+# ==============================
+# HANDLING MISSING VALUES
+# ==============================
+my_data <- my_data %>% drop_na()  
+# Use to remove rows with NA values
+
+my_data <- my_data %>% replace_na(list(NumericCol = 0))  
+# Use to replace missing values with a default
+
+
+# ==============================
+# BASIC VISUALIZATION
+# ==============================
+library(ggplot2)
+
+# Scatter plot with labels
+ggplot(summary_by_group, aes(x = mean_value, y = count)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(aes(label = CategoryCol), vjust = -1) +
+  geom_line(aes(group = 1), color = "red") +
+  labs(title = "Count vs Mean Value by Category", x = "Mean Value", y = "Count") +
+  theme_minimal()  
+# Use to see relationship between two numeric variables
+
+# Histogram
+ggplot(my_data, aes(x = NumericCol)) +
+  geom_histogram(bins = 20, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of NumericCol") +
+  theme_minimal()  
+# Use to see distribution of one numeric variable
+
+# Boxplot
+ggplot(my_data, aes(x = CategoryCol, y = NumericCol)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Boxplot by Category") +
+  theme_minimal()  
+# Use to compare distributions across groups
+
+library(ggplot2)
+library(dplyr)
+
+# ==============================
+# 1. Scatter Plot (with regression line)
+# ==============================
+ggplot(my_data, aes(x = NumericCol1, y = NumericCol2)) +
+  geom_point(color = "blue", size = 3) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot with Regression Line",
+       x = "X Variable",
+       y = "Y Variable") +
+  theme_minimal()
+# Use to explore relationship between two numeric variables; regression line shows trend
+
+# ==============================
+# 2. Line Plot / Time Series
+# ==============================
+ggplot(my_data, aes(x = Date, y = NumericCol, group = 1)) +
+  geom_line(color = "green", size = 1) +
+  geom_point(color = "darkgreen") +
+  labs(title = "Time Series of Numeric Column", x = "Date", y = "Value") +
+  theme_minimal()
+# Use when you have time/date data to see trends over time
+
+# ==============================
+# 3. Bar Plot / Column Plot
+# ==============================
+summary_by_category <- my_data %>%
+  group_by(CategoryCol) %>%
+  summarize(count = n(), .groups = "drop")
+
+ggplot(summary_by_category, aes(x = CategoryCol, y = count, fill = CategoryCol)) +
+  geom_col() +
+  labs(title = "Bar Plot of Counts by Category", x = "Category", y = "Count") +
+  theme_minimal() +
+  theme(legend.position = "none")
+# Use for counts or totals by category
+
+# ==============================
+# 4. Stacked Bar Plot
+# ==============================
+summary_stacked <- my_data %>%
+  group_by(CategoryCol, SubCategoryCol) %>%
+  summarize(count = n(), .groups = "drop")
+
+ggplot(summary_stacked, aes(x = CategoryCol, y = count, fill = SubCategoryCol)) +
+  geom_col() +
+  labs(title = "Stacked Bar Plot", x = "Category", y = "Count") +
+  theme_minimal()
+# Use to show composition of subgroups within each category
+
+# ==============================
+# 5. Histogram (distribution)
+# ==============================
+ggplot(my_data, aes(x = NumericCol)) +
+  geom_histogram(bins = 20, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Numeric Column", x = "Value", y = "Frequency") +
+  theme_minimal()
+# Use to check distribution of a numeric variable
+
+# ==============================
+# 6. Density Plot
+# ==============================
+ggplot(my_data, aes(x = NumericCol, fill = CategoryCol)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot by Category", x = "Value", y = "Density") +
+  theme_minimal()
+# Use to visualize distribution with smooth curves, useful for comparing groups
+
+# ==============================
+# 7. Boxplot (for comparing distributions)
+# ==============================
+ggplot(my_data, aes(x = CategoryCol, y = NumericCol)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Boxplot by Category", x = "Category", y = "Value") +
+  theme_minimal()
+# Use to compare median, quartiles, and outliers across groups
+
+# ==============================
+# 8. Violin Plot
+# ==============================
+ggplot(my_data, aes(x = CategoryCol, y = NumericCol, fill = CategoryCol)) +
+  geom_violin(alpha = 0.6) +
+  geom_boxplot(width = 0.1, fill = "white") +
+  labs(title = "Violin Plot with Boxplot Overlay", x = "Category", y = "Value") +
+  theme_minimal()
+# Use to see full distribution shape per category, including density
+
+# ==============================
+# 9. Faceted Plots (small multiples)
+# ==============================
+ggplot(my_data, aes(x = NumericCol)) +
+  geom_histogram(bins = 15, fill = "lightblue", color = "black") +
+  facet_wrap(~ CategoryCol) +
+  labs(title = "Faceted Histogram by Category", x = "Value", y = "Frequency") +
+  theme_minimal()
+# Use to compare the same plot across multiple groups easily
+
+# ==============================
+# 10. Scatter Plot with Color/Size Encoding
+# ==============================
+ggplot(my_data, aes(x = NumericCol1, y = NumericCol2, color = CategoryCol, size = NumericCol3)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Scatter Plot with Color and Size", x = "X", y = "Y") +
+  theme_minimal()
+# Use when you want to show three variables in one scatter plot
+
+```
+
+```{r}
+library(readr)
+library(stringr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+fg_data <- read.csv("~/Downloads/field_goal_data.csv")
+
+summary(fg_data)
+```
+
+```{r}
+# clean to numeric
+fg_data <- fg_data %>%
+  mutate(Location = str_extract(Location, "\\d+"),
+         Location = as.numeric(Location))
+# good = 1, no good = 0
+fg_data <- fg_data %>%
+  mutate(
+    made = if_else(str_detect(Detail, "good$") & !str_detect(Detail, "no good$"), 1, 0)
+  )
+
+# filter to year
+fg_data <- fg_data %>%
+  mutate(Year = year(Date))
+
+# group by year and get made percentage
+fg_by_year <- fg_data %>%
+  group_by(Year) %>%
+  summarize(
+    total = n(),
+    made_pct = mean(made, na.rm = TRUE) * 100  # percentage
+  )
+
+# check data
+glimpse(fg_data)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Aggregate by Year
+fg_by_year_summary <- fg_data %>%
+  group_by(Year) %>%
+  summarize(
+    avg_distance = mean(Location, na.rm = TRUE) + 18,  # average distance + 18
+    made_pct = mean(made, na.rm = TRUE) * 100,         # percentage made
+    .groups = "drop"
+  ) %>%
+  arrange(Year)  # ensure chronological order
+
+# Plot with lines connecting years
+ggplot(fg_by_year_summary, aes(x = avg_distance, y = made_pct)) +
+  geom_point(size = 3, color = "blue") +
+  geom_line(color = "red", size = 1) +  # line connecting points
+  geom_text(aes(label = Year), vjust = -1.2) +  # label points with year
+  labs(
+    title = "Average Field Goal Distance vs Completion Percentage by Year",
+    x = "Average Distance + 18 (yards)",
+    y = "Percentage Made"
+  ) +
+  theme_minimal()
+
+```
